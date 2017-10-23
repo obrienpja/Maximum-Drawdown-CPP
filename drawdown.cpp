@@ -6,16 +6,28 @@
 #include <numeric>
 #include <iterator>
 #include <functional>
+#include <string>
 
 int randFunc(int num)
 {
   return rand() % num;
 }
 
+// std::vector<double> equityCurve(int numDays)
+// {}
+
 int main()
 {
   /* initialize random seed: */
   srand (time(NULL));
+
+  std::string filename;
+
+  std::cout << "Enter .csv file name: " << std::endl;
+  std::cin >> filename;
+
+  std::cout << "The file name is: " << filename << std::endl;
+
   std::vector<double> indices;
 
   int N;
