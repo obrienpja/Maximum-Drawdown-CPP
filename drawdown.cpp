@@ -13,6 +13,23 @@ int randFunc(int num)
   return rand() % num;
 }
 
+std::vector<int> peaks(std::vector<double> equity)
+{
+  std::vector<int> inds;
+  for(int i = 1; i < equity.size() - 1; i++)
+  {
+    if((equity.at(i-1) < equity.at(i) && (equity.at(i) > equity.at(i+1))))
+      inds.push_back(i);
+  }
+  return inds;
+}
+
+void printVector(std::vector<int> vec)
+{
+  for(std::vector<int>::iterator i = vec.begin(); i != vec.end(); i++)
+    std::cout << *i << std::endl;
+}
+
 // std::vector<double> equityCurve(int numDays)
 // {}
 
@@ -28,9 +45,9 @@ int main()
 
   std::cout << "The file name is: " << filename << std::endl;
 
-  std::vector<double> indices;
+  std::vector<double> equityCurve;
 
-  int N = 4;
+  int N = 8;
 
   // std::cout << "Enter the number of days:" << std::endl;
   // std::cin >> N;
@@ -45,15 +62,19 @@ int main()
   for(int i = 0; i < N; i++)
   {
     total += *(returnProfile.begin() + randFunc(returnProfile.size()));
-    indices.push_back(total);
+    equityCurve.push_back(total);
   }
 
   // std::partial_sum(returnProfile.begin(), returnProfile.end(),  std::ostream_iterator<double>(std::cout, " "));
 
-  for(std::vector<double>::iterator i = indices.begin() ; i != indices.end(); i++)
+  for(std::vector<double>::iterator i = equityCurve.begin() ; i != equityCurve.end(); i++)
   {
     std::cout << *i << std::endl;
   }
+
+
+  std::cout << "The peaks are: " << std::endl;
+  printVector(peaks(equityCurve));
 
   // for(std::vector<double>::iterator i = result.begin() ; i != result.end(); i++)
   // {
