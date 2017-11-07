@@ -7,18 +7,36 @@
 #include <iterator>
 #include <functional>
 #include <string>
+#include <algorithm>
 
 // From plotting script
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include "../matplotlib-cpp/matplotlibcpp.h"
-
 namespace plt = matplotlibcpp;
+
 
 int randFunc(int num)
 {
   return rand() % num;
 }
+
+
+std::vector<double> equityCurve(std::vector<double> returnProf, int Num)
+{
+  std::vector<double> equity;
+  double total = 0;
+
+  // Generates the equity curve
+  for(int i = 0; i < Num; i++)
+  {
+    total += *(returnProf.begin() + randFunc(returnProf.size()));
+    equity.push_back(total);
+  }
+
+  return equity;
+}
+
 
 std::vector<int> peaks(std::vector<double> equity)
 {
@@ -31,17 +49,20 @@ std::vector<int> peaks(std::vector<double> equity)
   return inds;
 }
 
+
 void printVector(std::vector<int> vec)
 {
   for(std::vector<int>::iterator i = vec.begin(); i != vec.end(); i++)
     std::cout << *i << std::endl;
 }
 
+
 void printVector(std::vector<double> vec)
 {
   for(std::vector<double>::iterator i = vec.begin(); i != vec.end(); i++)
     std::cout << *i << std::endl;
 }
+
 
 std::vector<int> increasingPeaks(std::vector<double> equity)
 {
@@ -68,89 +89,92 @@ std::vector<int> increasingPeaks(std::vector<double> equity)
 }
 
 
-// std::vector<double> equityCurve(int numDays)
-// {}
-
-int main()
+std::vector<double> negVector(std::vector<double> equity)
 {
-  /* initialize random seed: */
-  srand (time(NULL));
+  std::vector<double> nVector;
 
-  // std::string filename;
-  //
-  // std::cout << "Enter .csv file name: " << std::endl;
-  // std::cin >> filename;
-  //
-  // std::cout << "The file name is: " << filename << std::endl;
-
-  std::vector<double> equityCurve;
-
-  int N = 22;
-
-  // std::cout << "Enter the number of days:" << std::endl;
-  // std::cin >> N;
-  std::vector<double> returnProfile = {1.5, -.5, -.5, -.5};
-  std::vector<double> result(4);
-
-  std::cout << "The equity curve is: " << std::endl;
-  std::cout << "--------------------------" << std::endl;
-
-  double total = 0;
-
-  // Generates the equity curve
-  for(int i = 0; i < N; i++)
+  for(std::vector<double>::iterator i = equity.begin(); i != equity.end(); i++)
   {
-    total += *(returnProfile.begin() + randFunc(returnProfile.size()));
-    equityCurve.push_back(total);
+    nVector.push_back(-(*i));
   }
 
-  // std::partial_sum(returnProfile.begin(), returnProfile.end(),  std::ostream_iterator<double>(std::cout, " "));
+  return nVector;
+}
 
-  for(std::vector<double>::iterator i = equityCurve.begin() ; i != equityCurve.end(); i++)
+
+std::vector<int> valleys(std::vector<double> equity)
+{
+  return peaks(negVector(equity));
+}
+
+std::vector<int> inBetweenValleys(std::vector<int> incrPeaks, std::vector<int> theValleys, int Num)
+{
+  std::vector<int> inValleys;
+  std::vector<int>::iterator pItr = incrPeaks.begin();
+
+  std::cout << "The in between valleys are: " << std::endl;
+
+  for(std::vector<int>::iterator j = theValleys.begin(); j != theValleys.end(); j++)
   {
-    std::cout << *i << std::endl;
+    if((*(pItr + Num) < *j) && (*j < *(pItr + 1 + Num)))
+      inValleys.push_back(*j);
   }
 
+  return inValleys;
+}
 
-  std::cout << "The peaks are: " << std::endl;
-  printVector(peaks(equityCurve));
+std::vector<double> pullValues(std::vector<double> equity, std::vector<int> vals)
+{
+  std::vector<double> pulledValues;
 
-  std::cout << "The increasing peaks are: " << std::endl;
-  printVector(increasingPeaks(equityCurve));
+  for(std::vector<int>::iterator i = vals.begin(); i != vals.end(); i++)
+  {
+    pulledValues.push_back(equity.at(*i));
+  }
 
-  // for(std::vector<double>::iterator i = result.begin() ; i != result.end(); i++)
-  // {
-  //   std::cout << *i << std::endl;
-  // }
+  return pulledValues;
+}
+
+// int findMaxDrawdown(std::vector<double> equity)
+// {
+//   std::vector<int> iPeaks = increasingPeaks(equity);
+//   std::vector<int> allValleys = valleys(equity);
+//   std::vector<double> sliced;
+//
+//   if(iPeaks.size() == 0)
+//     return 0;
+//   else if(iPeaks.size() == 1)
+//   {
+//     return equity.at(*iPeaks.begin()) - equity.at(*std::min_element(equity.begin() + *iPeaks.begin(), equity.end()));
+//   }
+//   else
+//   {
+//     for(std::vector<int>::iterator i = iPeaks.begin(); i != (iPeaks.end() - 1); i++)
+//
+//     return *(std::max_element(drawList));
+//   }
+//
+// }
 
 
-  // std::cout << "The value of the thing is: " << *(returnProfile.begin()+1) << std::endl;
+void plotCurves(std::vector<double> equity, std::string filename)
+{
+// Prepare data.
+int n = equity.size();
+std::vector<double> x(n);
+for(int i=0; i<n; ++i)
+  x.at(i) = i;
 
-  // for(std::vector<double>::iterator i = returnProfile.begin() ; i != returnProfile.end(); i++)
-  // {
-  //   std::cout << *i << std::endl;
-  // }
+// Plot line from given x and y data. Color is selected automatically.
+plt::plot(x, equity, "bo");
 
-  // Prepare data.
-	int n = equityCurve.size();
-	std::vector<double> x(n), y(n);
-	for(int i=0; i<n; ++i) {
-		x.at(i) = i;
-		y.at(i) = 2*log(i);
-	}
+// Set x-axis to interval [0,1000000]
+plt::xlim(0, n);
 
-	// Plot line from given x and y data. Color is selected automatically.
-	plt::plot(x, equityCurve, "bo");
-
-	// Set x-axis to interval [0,1000000]
-	plt::xlim(0, n);
-
-	// Add graph title
-	plt::title("Equity Curve");
-	// Enable legend.
-	plt::legend();
-	// save figure
-	plt::save("./basic.jpg");
-
-  return 0;
+// Add graph title
+plt::title("Equity Curve");
+// Enable legend.
+plt::legend();
+// save figure
+plt::save(filename);
 }
