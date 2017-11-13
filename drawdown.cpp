@@ -107,16 +107,15 @@ std::vector<int> valleys(std::vector<double> equity)
   return peaks(negVector(equity));
 }
 
-std::vector<int> inBetweenValleys(std::vector<int> incrPeaks, std::vector<int> theValleys, int Num)
+std::vector<int> inBetweenValleys(std::vector<int>::iterator incrPeaksInd, std::vector<int> theValleys)
 {
   std::vector<int> inValleys;
-  std::vector<int>::iterator pItr = incrPeaks.begin();
 
   std::cout << "The in between valleys are: " << std::endl;
 
   for(std::vector<int>::iterator j = theValleys.begin(); j != theValleys.end(); j++)
   {
-    if((*(pItr + Num) < *j) && (*j < *(pItr + 1 + Num)))
+    if((*(incrPeaksInd) < *j) && (*j < *(incrPeaksInd + 1)))
       inValleys.push_back(*j);
   }
 
@@ -128,33 +127,43 @@ std::vector<double> pullValues(std::vector<double> equity, std::vector<int> vals
   std::vector<double> pulledValues;
 
   for(std::vector<int>::iterator i = vals.begin(); i != vals.end(); i++)
-  {
     pulledValues.push_back(equity.at(*i));
-  }
 
   return pulledValues;
 }
 
-// int findMaxDrawdown(std::vector<double> equity)
-// {
-//   std::vector<int> iPeaks = increasingPeaks(equity);
-//   std::vector<int> allValleys = valleys(equity);
-//   std::vector<double> sliced;
+int findMaxDrawdown(std::vector<double> equity)
+{
+  std::vector<int> iPeaks = increasingPeaks(equity);
+  std::vector<int> allValleys = valleys(equity);
+  std::vector<double> drawList;
+
+  if(iPeaks.size() == 0)
+    return 0;
+  else if(iPeaks.size() == 1)
+  {
+    return equity.at(*iPeaks.begin()) - equity.at(*std::min_element(equity.begin() + *iPeaks.begin(), equity.end()));
+  }
+
+  else
+  {
+    for(std::vector<int>::iterator i = iPeaks.begin(); i != (iPeaks.end() - 1); i++)
+    {
+      std::vector<double> selectedValleys = pullValues(equity, inBetweenValleys(i, allValleys));
+      drawList.push_back(equity.at(*i) - *(std::min_element(selectedValleys.begin(), selectedValleys.end())));
+    }
+
+
+//     std::vector<double> sliced(equity.at());
+
+    std::cout << "The drawdown list is: " << std::endl;
+
+    printVector(drawList);
+
+    return *(std::max_element(drawList.begin(), drawList.end()));
+  }
 //
-//   if(iPeaks.size() == 0)
-//     return 0;
-//   else if(iPeaks.size() == 1)
-//   {
-//     return equity.at(*iPeaks.begin()) - equity.at(*std::min_element(equity.begin() + *iPeaks.begin(), equity.end()));
-//   }
-//   else
-//   {
-//     for(std::vector<int>::iterator i = iPeaks.begin(); i != (iPeaks.end() - 1); i++)
-//
-//     return *(std::max_element(drawList));
-//   }
-//
-// }
+}
 
 
 void plotCurves(std::vector<double> equity, std::string filename)
@@ -176,5 +185,6 @@ plt::title("Equity Curve");
 // Enable legend.
 plt::legend();
 // save figure
-plt::save(filename);
+// plt::save(filename);
+plt::show();
 }
