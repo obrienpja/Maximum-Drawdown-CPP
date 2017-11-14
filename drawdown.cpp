@@ -85,6 +85,9 @@ std::vector<int> increasingPeaks(std::vector<double> equity)
     }
   }
 
+  std::cout << "The increasing peaks are: " << std::endl;
+  printVector(increasingPeakIndices);
+
   return increasingPeakIndices;
 }
 
@@ -119,6 +122,8 @@ std::vector<int> inBetweenValleys(std::vector<int>::iterator incrPeaksInd, std::
       inValleys.push_back(*j);
   }
 
+  printVector(inValleys);
+
   return inValleys;
 }
 
@@ -132,19 +137,21 @@ std::vector<double> pullValues(std::vector<double> equity, std::vector<int> vals
   return pulledValues;
 }
 
-int findMaxDrawdown(std::vector<double> equity)
+double findMaxDrawdown(std::vector<double> equity)
 {
   std::vector<int> iPeaks = increasingPeaks(equity);
   std::vector<int> allValleys = valleys(equity);
   std::vector<double> drawList;
 
+  std::cout << "The increasing peaks are: " << std::endl;
+  printVector(iPeaks);
+
   if(iPeaks.size() == 0)
     return 0;
   else if(iPeaks.size() == 1)
   {
-    return equity.at(*iPeaks.begin()) - equity.at(*std::min_element(equity.begin() + *iPeaks.begin(), equity.end()));
+    return equity.at(*iPeaks.begin()) - *std::min_element(equity.begin() + *iPeaks.begin(), equity.end());
   }
-
   else
   {
     for(std::vector<int>::iterator i = iPeaks.begin(); i != (iPeaks.end() - 1); i++)
@@ -154,15 +161,15 @@ int findMaxDrawdown(std::vector<double> equity)
     }
 
 
-//     std::vector<double> sliced(equity.at());
+    std::vector<double> sliced(equity.begin() + iPeaks.back(), equity.end());
+    drawList.push_back(equity.at(iPeaks.back()) - *std::min_element(sliced.begin(), sliced.end()));
 
     std::cout << "The drawdown list is: " << std::endl;
 
     printVector(drawList);
 
-    return *(std::max_element(drawList.begin(), drawList.end()));
+    return *std::max_element(drawList.begin(), drawList.end());
   }
-//
 }
 
 
@@ -185,6 +192,6 @@ plt::title("Equity Curve");
 // Enable legend.
 plt::legend();
 // save figure
-// plt::save(filename);
-plt::show();
+plt::save(filename);
+// plt::show();
 }
