@@ -8,6 +8,8 @@
 #include <functional>
 #include <string>
 #include <algorithm>
+#include <fstream>
+#include <thread>
 
 // From plotting script
 #define _USE_MATH_DEFINES
@@ -16,21 +18,35 @@
 namespace plt = matplotlibcpp;
 
 
-int randFunc(int num)
+std::string inputFilename(int fileNum)
 {
-  return rand() % num;
+  std::string filename;
+  filename = ("Input Data/data" + std::to_string(fileNum)) + ".csv";
+  return filename;
 }
 
 
-std::vector<double> equityCurve(std::vector<double> returnProf, int Num)
+std::string outputFilename(int fileNum)
+{
+  std::string filename;
+  filename = ("Data/data" + std::to_string(fileNum)) + ".csv";
+  return filename;
+}
+
+
+int randFunc(int num) { return rand() % num;}
+
+
+std::vector<double> equityCurve(std::vector<double> returnProf, const int Num)
 {
   std::vector<double> equity;
+  int returnProfileSize = returnProf.size();
   double total = 0;
 
   // Generates the equity curve
   for(int i = 0; i < Num; i++)
   {
-    total += *(returnProf.begin() + randFunc(returnProf.size()));
+    total += *(returnProf.begin() + randFunc(returnProfileSize));
     equity.push_back(total);
   }
 
@@ -85,9 +101,6 @@ std::vector<int> increasingPeaks(std::vector<double> equity)
     }
   }
 
-  std::cout << "The increasing peaks are: " << std::endl;
-  printVector(increasingPeakIndices);
-
   return increasingPeakIndices;
 }
 
@@ -110,11 +123,10 @@ std::vector<int> valleys(std::vector<double> equity)
   return peaks(negVector(equity));
 }
 
+
 std::vector<int> inBetweenValleys(std::vector<int>::iterator incrPeaksInd, std::vector<int> theValleys)
 {
   std::vector<int> inValleys;
-
-  std::cout << "The in between valleys are: " << std::endl;
 
   for(std::vector<int>::iterator j = theValleys.begin(); j != theValleys.end(); j++)
   {
@@ -122,10 +134,9 @@ std::vector<int> inBetweenValleys(std::vector<int>::iterator incrPeaksInd, std::
       inValleys.push_back(*j);
   }
 
-  printVector(inValleys);
-
   return inValleys;
 }
+
 
 std::vector<double> pullValues(std::vector<double> equity, std::vector<int> vals)
 {
@@ -137,14 +148,12 @@ std::vector<double> pullValues(std::vector<double> equity, std::vector<int> vals
   return pulledValues;
 }
 
+
 double findMaxDrawdown(std::vector<double> equity)
 {
   std::vector<int> iPeaks = increasingPeaks(equity);
   std::vector<int> allValleys = valleys(equity);
   std::vector<double> drawList;
-
-  std::cout << "The increasing peaks are: " << std::endl;
-  printVector(iPeaks);
 
   if(iPeaks.size() == 0)
     return 0;
@@ -160,16 +169,83 @@ double findMaxDrawdown(std::vector<double> equity)
       drawList.push_back(equity.at(*i) - *(std::min_element(selectedValleys.begin(), selectedValleys.end())));
     }
 
-
     std::vector<double> sliced(equity.begin() + iPeaks.back(), equity.end());
     drawList.push_back(equity.at(iPeaks.back()) - *std::min_element(sliced.begin(), sliced.end()));
 
-    std::cout << "The drawdown list is: " << std::endl;
-
-    printVector(drawList);
-
     return *std::max_element(drawList.begin(), drawList.end());
   }
+}
+
+
+void saveData(std::string filename, std::vector<double> & data)
+{
+  std::ofstream output_file(filename);
+  std::ostream_iterator<double> output_iterator(output_file, "\n");
+  std::copy(data.begin(), data.end(), output_iterator);
+}
+
+
+void runSimulation(std::vector<double> retProf, std::vector<double> & equity, std::vector<double> & allDraws, int n_It, int n_Day)
+{
+  allDraws.resize(0);
+
+  for(int i = 0; i < n_It; ++i)
+  {
+    equity = equityCurve(retProf, n_Day);
+    allDraws.push_back(findMaxDrawdown(equity));
+  }
+}
+
+
+double percentileDrawdown(std::vector<double> & equity, double percent, int n_It)
+{
+  int ele = percent * n_It;
+  return equity.at(ele);
+}
+
+
+void sortDescending(std::vector<double> & allDraws)
+{
+  std::sort(allDraws.rbegin(), allDraws.rend());
+}
+
+
+double worstPossible(std::vector<double> returnProf, int n_Day)
+{
+  return -*std::min_element(returnProf.begin(), returnProf.end()) * n_Day;
+}
+
+
+std::vector<int> range(int beg, int en)
+{
+  std::vector<int> rangeVals;
+  for(int i = beg; i < (en + 1); i++)
+    rangeVals.push_back(i);
+
+  return rangeVals;
+}
+
+
+void runAndSave(int iter)
+{
+  // Break this off as a separate function
+  std::string file = inputFilename(iter);
+  std::ifstream f(file);
+  std::string num;
+  std::vector<double> returnProfile;
+  const int n_Days = 250;
+  const int n_Itr = 1000000;
+
+  std::vector<double> equity, allDraws;
+
+  while(getline(f, num, '\n'))
+  {
+    returnProfile.push_back(std::stod(num));
+  }
+
+  runSimulation(returnProfile, equity, allDraws, n_Itr, n_Days);
+  sortDescending(allDraws);
+  saveData(outputFilename(iter), allDraws);
 }
 
 
